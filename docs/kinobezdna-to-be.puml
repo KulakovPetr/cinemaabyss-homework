@@ -1,0 +1,46 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_WITH_LEGEND()
+
+title Container diagram for CinemaAbyss To-Be Architecture
+
+Person(user, "Пользователь", "Смотрит фильмы через веб/мобильный/TV")
+
+System_Boundary(cinemaabyss, "Кинобездна") {
+    Container(proxy, "API Gateway / Proxy", "Go", "Единая точка входа, Strangler Fig паттерн")
+    
+    Container_Boundary(microservices, "Микросервисы") {
+        Container(movies, "Movies Service", "Go", "Метаданные о фильмах")
+        Container(events, "Events Service", "Go", "Обработка событий через Kafka")
+    }
+    
+    Container_Boundary(monolith_boundary, "Монолит (постепенно заменяется)") {
+        Container(monolith, "Monolith Service", "Go", "Пользователи, платежи, подписки")
+    }
+    
+    ContainerDb(postgres, "PostgreSQL", "PostgreSQL", "Основная БД: пользователи, платежи, подписки, фильмы")
+    
+    Container_Boundary(messaging, "Messaging") {
+        Container(kafka, "Kafka", "Apache Kafka", "Очередь событий: movie-events, user-events, payment-events")
+        Container(zookeeper, "ZooKeeper", "Apache ZooKeeper", "Координация Kafka")
+    }
+}
+
+System_Ext(recommendations, "Recommendation System", "Внешняя рекомендательная система")
+
+Rel(user, proxy, "HTTPS", "REST/JSON")
+Rel(proxy, movies, "HTTP", "REST/JSON (постепенная миграция)")
+Rel(proxy, monolith, "HTTP", "REST/JSON (legacy)")
+Rel(proxy, events, "HTTP", "REST/JSON")
+
+Rel(movies, postgres, "JDBC", "SQL")
+Rel(monolith, postgres, "JDBC", "SQL")
+
+Rel(events, kafka, "Produce", "Kafka Producer")
+Rel(kafka, events, "Consume", "Kafka Consumer")
+Rel(kafka, zookeeper, "Coordinate", "Kafka coordination")
+
+Rel(monolith, recommendations, "HTTP", "Async API calls")
+
+@enduml
