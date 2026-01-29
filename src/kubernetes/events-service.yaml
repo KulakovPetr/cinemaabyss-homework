@@ -22,8 +22,8 @@ spec:
     spec:
       containers:
       - name: events-service
-        image: cinemaabyss-homework-events-service:latest
-        imagePullPolicy: Never
+        image: ghcr.io/kulakovpetr/cinemaabyss-homework/events-service:latest
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8082
         env:

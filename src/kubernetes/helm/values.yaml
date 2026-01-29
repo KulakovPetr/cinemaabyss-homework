@@ -33,9 +33,9 @@ database:
 monolith:
   enabled: true
   image:
-    repository: cinemaabyss-homework-monolith
+    repository: ghcr.io/kulakovpetr/cinemaabyss-homework/monolith
     tag: latest
-    pullPolicy: Never
+    pullPolicy: IfNotPresent
   replicas: 1
   resources:
     limits:
@@ -53,9 +53,9 @@ monolith:
 proxyService:
   enabled: true
   image:
-    repository: cinemaabyss-homework-proxy-service
-    tag: v2
-    pullPolicy: Never
+    repository: ghcr.io/kulakovpetr/cinemaabyss-homework/proxy-service
+    tag: latest
+    pullPolicy: IfNotPresent
   replicas: 1
   resources:
     limits:
@@ -73,9 +73,9 @@ proxyService:
 moviesService:
   enabled: true
   image:
-    repository: cinemaabyss-homework-movies-service
+    repository: ghcr.io/kulakovpetr/cinemaabyss-homework/movies-service
     tag: latest
-    pullPolicy: Never
+    pullPolicy: IfNotPresent
   replicas: 1
   resources:
     limits:
@@ -93,9 +93,9 @@ moviesService:
 eventsService:
   enabled: true
   image:
-    repository: cinemaabyss-homework-events-service
+    repository: ghcr.io/kulakovpetr/cinemaabyss-homework/events-service
     tag: latest
-    pullPolicy: Never
+    pullPolicy: IfNotPresent
   replicas: 1
   resources:
     limits:

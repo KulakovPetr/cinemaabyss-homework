@@ -22,8 +22,8 @@ spec:
     spec:
       containers:
       - name: movies-service
-        image: cinemaabyss-homework-movies-service:latest
-        imagePullPolicy: Never
+        image: ghcr.io/kulakovpetr/cinemaabyss-homework/movies-service:latest
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8081
         env:

@@ -22,8 +22,8 @@ spec:
     spec:
       containers:
       - name: monolith
-        image: cinemaabyss-homework-monolith:latest
-        imagePullPolicy: Never
+        image: ghcr.io/kulakovpetr/cinemaabyss-homework/monolith:latest
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8080
         env:

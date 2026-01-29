@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
       - name: proxy-service
-        image: cinemaabyss-homework-proxy-service:latest
+        image: ghcr.io/kulakovpetr/cinemaabyss-homework/proxy-service:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8000
