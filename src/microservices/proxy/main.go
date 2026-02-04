@@ -1,3 +1,4 @@
+// Trigger workflow rebuild
 package main
 
 import (
