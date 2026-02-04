@@ -1,7 +1,6 @@
 package main
 
 import (
-
 	"encoding/json"
 	"fmt"
 	"log"
@@ -9,7 +8,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-
 
 	"github.com/IBM/sarama"
 )
