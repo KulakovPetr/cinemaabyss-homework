@@ -2,6 +2,9 @@ FROM golang:1.23-alpine AS builder
 
 WORKDIR /app
 
+# Install git for `go mod download` when modules are fetched via VCS
+RUN apk --no-cache add git ca-certificates
+
 # Copy go mod file
 COPY go.mod ./
 
