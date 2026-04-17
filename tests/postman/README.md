@@ -12,7 +12,7 @@ This directory contains Postman tests for the CinemaAbyss microservices architec
 
 ## Test Coverage
 
-The tests cover the following services:
+Supported test scope (implemented services in repository):
 
 1. **Monolith Service**
    - User management (create, get)
@@ -24,13 +24,7 @@ The tests cover the following services:
    - Health check
    - Movie management (create, get)
 
-3. **Events Microservice**
-   - Health check
-   - Event publishing (movie, user, payment events)
-
-4. **Proxy Service**
-   - Health check
-   - Proxying requests to other services
+`Events Microservice` and `Proxy Service` folders are kept in the collection as planned migration stages and are not part of CI execution.
 
 ## Prerequisites
 
@@ -63,16 +57,14 @@ npm run test:docker
 
 ```bash
 # Run only Monolith Service tests
-npm run test:monolith
+npm run test:docker -- --folder "Monolith Service"
 
 # Run only Movies Microservice tests
-npm run test:movies
+npm run test:docker -- --folder "Movies Microservice"
 
-# Run only Events Microservice tests
-npm run test:events
-
-# Run only Proxy Service tests
-npm run test:proxy
+# Optional planned-stage tests
+npm run test:docker -- --folder "Events Microservice"
+npm run test:docker -- --folder "Proxy Service"
 ```
 
 ### Advanced Usage
@@ -102,14 +94,17 @@ After running the tests, HTML and JUnit XML reports will be generated in the `re
 
 ## CI/CD Integration
 
-These tests can be integrated into CI/CD pipelines. Here's an example of how to run them in a GitHub Actions workflow:
+The current GitHub Actions workflow runs only the supported folders (`Monolith Service`, `Movies Microservice`) against a dedicated CI compose stack.
+
+Example command sequence:
 
 ```yaml
 - name: Run API Tests
   run: |
     cd tests/postman
     npm install
-    npm run test:docker
+    npm run test:docker -- --folder "Monolith Service"
+    npm run test:docker -- --folder "Movies Microservice"
 ```
 
 ## Troubleshooting

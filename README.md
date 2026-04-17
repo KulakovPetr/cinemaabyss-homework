@@ -2,23 +2,22 @@
 
 Учебный проект миграции видеосервиса с монолита на микросервисную архитектуру по паттерну Strangler Fig.
 
-## Что внутри
+## Текущий статус
 
-- Монолит `src/monolith` с базовыми доменами (users, movies, payments, subscriptions).
-- Выделенный `movies-service` в `src/microservices/movies`.
-- `events-service` для событийной интеграции через Kafka.
-- `proxy-service` как API Gateway и точка поэтапного переключения трафика.
-- Инфраструктура для Docker Compose, Kubernetes и Helm.
-- API-тесты в Postman/Newman (`tests/postman`).
+- Реализовано и поддерживается в рабочем контуре:
+  - монолит `src/monolith` (users, movies, payments, subscriptions);
+  - выделенный `movies-service` (`src/microservices/movies`);
+  - инфраструктура запуска через Docker Compose;
+  - API-тесты в Postman/Newman для доступных сервисов.
+- Архитектурные артефакты для следующих этапов (`events/proxy`, Kubernetes/Helm, Kafka) сохранены в репозитории как roadmap миграции.
 
 ## Стек
 
 - Go
 - PostgreSQL
-- Kafka + ZooKeeper
 - Docker / Docker Compose
-- Kubernetes / Helm
 - GitHub Actions
+- Postman + Newman
 
 ## Быстрый старт локально
 
@@ -28,23 +27,21 @@ docker-compose up -d
 
 Сервисы:
 
-- API Gateway: `http://localhost:8000`
 - Monolith: `http://localhost:8080`
 - Movies service: `http://localhost:8081`
-- Events service: `http://localhost:8082`
-- Kafka UI: `http://localhost:8090`
 
 ## Тестирование
 
 ```bash
 cd tests/postman
 npm install
-npm run test:docker
+npm run test:docker -- --folder "Monolith Service"
+npm run test:docker -- --folder "Movies Microservice"
 ```
 
 ## Архитектурная ценность проекта
 
-- демонстрация декомпозиции монолита;
-- проектирование и эксплуатация event-driven взаимодействия;
-- подготовка deployment-артефактов под Kubernetes;
-- автоматизация CI/CD pipeline.
+- декомпозиция монолита на отдельный предметный сервис;
+- формирование migration roadmap по Strangler Fig;
+- проектирование API-контрактов и тестового контура;
+- автоматизация CI/CD-проверок для поддерживаемой части системы.
