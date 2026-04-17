@@ -1,0 +1,53 @@
+services:
+  postgres:
+    image: postgres:14
+    container_name: cinemaabyss-postgres-ci
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_password
+      POSTGRES_DB: cinemaabyss
+    volumes:
+      - ../../src/database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - cinemaabyss-network
+
+  monolith:
+    build:
+      context: ../../src/monolith
+      dockerfile: Dockerfile
+    container_name: cinemaabyss-monolith-ci
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PORT: 8080
+      DB_CONNECTION_STRING: postgres://postgres:postgres_password@postgres:5432/cinemaabyss?sslmode=disable
+    ports:
+      - "8080:8080"
+    networks:
+      - cinemaabyss-network
+
+  movies-service:
+    build:
+      context: ../../src/microservices/movies
+      dockerfile: Dockerfile
+    container_name: cinemaabyss-movies-service-ci
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PORT: 8081
+      DB_CONNECTION_STRING: postgres://postgres:postgres_password@postgres:5432/cinemaabyss?sslmode=disable
+    ports:
+      - "8081:8081"
+    networks:
+      - cinemaabyss-network
+
+networks:
+  cinemaabyss-network:
+    name: cinemaabyss-network
