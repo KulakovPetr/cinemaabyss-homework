@@ -5,13 +5,40 @@
 1. Спроектируйте to be архитектуру КиноБездны, разделив всю систему на отдельные домены и организовав интеграционное взаимодействие и единую точку вызова сервисов.
 Результат представьте в виде контейнерной диаграммы в нотации С4.
 Добавьте ссылку на файл в этот шаблон
-[ссылка на файл](ссылка)
+
+[ссылка на файл](docs/kinobezdna-to-be.puml)
+
+## Описание To-Be архитектуры
+
+Система "Кинобездна" разделена на следующие компоненты:
+
+1. **API Gateway / Proxy Service** - единая точка входа для всех клиентских запросов. Реализует паттерн Strangler Fig для постепенной миграции с монолита на микросервисы.
+
+2. **Микросервисы**:
+   - **Movies Service** - отвечает за метаданные о фильмах (жанры, актёры, оценки)
+   - **Events Service** - обрабатывает события через Kafka (movie-events, user-events, payment-events)
+
+3. **Монолит** - постепенно заменяется микросервисами, пока обрабатывает пользователей, платежи и подписки
+
+4. **PostgreSQL** - основная база данных для всех сервисов
+
+5. **Kafka + ZooKeeper** - система очередей для асинхронной обработки событий
+
+6. **Внешние системы** - рекомендательная система (интеграция через API)
+
+Архитектура позволяет постепенно мигрировать функциональность из монолита в микросервисы без простоя системы.
 
 # Задание 2
 
 ### 1. Proxy
 Команда КиноБездны уже выделила сервис метаданных о фильмах movies и вам необходимо реализовать бесшовный переход с применением паттерна Strangler Fig в части реализации прокси-сервиса (API Gateway), с помощью которого можно будет постепенно переключать траффик, используя фиче-флаг.
 
+**Реализация:**
+- Создан proxy-сервис на Go в `./src/microservices/proxy`
+- Реализован паттерн Strangler Fig с использованием переменной окружения `MOVIES_MIGRATION_PERCENT`
+- При запросе `/api/movies` сервис случайным образом (на основе процента миграции) направляет запрос либо в монолит, либо в новый movies-service
+- Все остальные запросы `/api/*` проксируются в монолит
+- Запросы `/api/events/*` проксируются в events-service
 
 Реализуйте сервис на любом языке программирования в ./src/microservices/proxy.
 Конфигурация для запуска сервиса через docker-compose уже добавлена
@@ -52,6 +79,17 @@
 
 Для этого нужно сделать MVP сервис events, который будет при вызове API создавать и сам же читать сообщения в топике Kafka.
 
+**Реализация:**
+- Создан events-сервис на Go в `./src/microservices/events`
+- Используется библиотека `github.com/IBM/sarama` для работы с Kafka
+- Реализованы три REST API endpoint:
+  - `POST /api/events/movie` - создаёт событие фильма в топик `movie-events`
+  - `POST /api/events/user` - создаёт событие пользователя в топик `user-events`
+  - `POST /api/events/payment` - создаёт событие платежа в топик `payment-events`
+- Producer отправляет события в соответствующие топики Kafka
+- Consumer в фоновом режиме читает события из всех трёх топиков и логирует их обработку
+- Сервис добавлен в docker-compose.yml
+
     - Разработайте сервис на любом языке программирования с consumer'ами и producer'ами.
     - Реализуйте простой API, при вызове которого будут создаваться события User/Payment/Movie и обрабатываться внутри сервиса с записью в лог
     - Добавьте в docker-compose новый сервис, kafka там уже есть
@@ -68,6 +106,13 @@
 
 
 ### CI/CD
+
+**Реализация:**
+- Доработан workflow `.github/workflows/docker-build-push.yml`
+- Добавлены шаги сборки и push для `proxy-service` и `events-service` в GitHub Container Registry (GHCR)
+- Добавлен job `api-tests`, который запускается после успешной сборки
+- API-тесты запускаются через Newman после поднятия всех сервисов через docker-compose
+- Workflow срабатывает при push в ветки `main` и `cinema`
 
  В папке .github/worflows доработайте деплой новых сервисов proxy и events в docker-build-push.yml , чтобы api-tests при сборке отрабатывали корректно при отправке коммита в ваш репозиторий.
 
@@ -163,6 +208,15 @@ cat .docker/config.json | base64
 ```
 
 #### Шаг 2
+
+**Реализация:**
+- Созданы Deployment и Service для `proxy-service` в `src/kubernetes/proxy-service.yaml`
+- Созданы Deployment и Service для `events-service` в `src/kubernetes/events-service.yaml`
+- Оба сервиса настроены с health checks, resource limits и imagePullSecrets
+- Доработан `ingress.yaml`:
+  - Добавлен путь `/` для proxy-service (порт 80)
+  - Добавлен путь `/api/events` для events-service (порт 8082)
+- Обновлён `configmap.yaml` с добавлением `EVENTS_SERVICE_URL`
 
   Доработайте src/kubernetes/event-service.yaml и src/kubernetes/proxy-service.yaml
 
@@ -278,6 +332,18 @@ cat .docker/config.json | base64
 
 # Задание 4
 Для простоты дальнейшего обновления и развертывания вам как архитектуру необходимо так же реализовать helm-чарты для прокси-сервиса и проверить работу 
+
+**Реализация:**
+- Доработаны Helm-чарты в `src/kubernetes/helm/`
+- Заполнены шаблоны для `proxy-service.yaml` и `events-service.yaml` в `templates/services/`
+- Обновлён `configmap.yaml` в шаблонах с добавлением `EVENTS_SERVICE_URL`
+- В `values.yaml` уже были настроены конфигурации для обоих сервисов
+- Helm-чарты позволяют легко управлять версиями, ресурсами и конфигурацией через values.yaml
+
+**Использование Helm:**
+- Установка: `helm install cinemaabyss ./src/kubernetes/helm --namespace cinemaabyss --create-namespace`
+- Обновление: `helm upgrade cinemaabyss ./src/kubernetes/helm --namespace cinemaabyss`
+- Для канареечных релизов можно использовать разные values файлы или изменять `MOVIES_MIGRATION_PERCENT` через `helm upgrade --set config.moviesMigrationPercent=50`
 
 Для этого:
 1. Перейдите в директорию helm и отредактируйте файл values.yaml
